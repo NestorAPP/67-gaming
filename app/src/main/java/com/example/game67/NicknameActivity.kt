@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.Gravity
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -24,13 +25,17 @@ class NicknameActivity : AppCompatActivity() {
         etNickname = findViewById(R.id.etNickname)
         llHistory = findViewById(R.id.llHistory)
         val btnPlay = findViewById<Button>(R.id.btnPlay)
+        val btnSettings = findViewById<ImageButton>(R.id.btnSettings)
 
-        // Если уже есть текущий ник — подставим
         if (prefs.currentNickname.isNotEmpty()) {
             etNickname.setText(prefs.currentNickname)
         }
 
         renderHistory()
+
+        btnSettings.setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
 
         btnPlay.setOnClickListener {
             val nickname = etNickname.text.toString().trim()
