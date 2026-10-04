@@ -12,7 +12,7 @@
         android:layout_alignParentEnd="true"
         android:layout_margin="16dp"
         android:background="?android:attr/selectableItemBackgroundBorderless"
-        android:src="@android:drawable/ic_menu_preferences"
+        android:src="@android:drawable/ic_menu_manage"
         android:contentDescription="@string/settings" />
 
     <LinearLayout
