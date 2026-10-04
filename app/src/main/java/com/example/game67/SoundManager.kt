@@ -11,33 +11,38 @@ class SoundManager(private val context: Context) {
 
     private var sixPlayer: MediaPlayer? = null
     private var sevenPlayer: MediaPlayer? = null
+    private var errorPlayer: MediaPlayer? = null
     private var soundEnabled = true
 
     init {
         sixPlayer = MediaPlayer.create(context, R.raw.six)
         sevenPlayer = MediaPlayer.create(context, R.raw.seven)
+        errorPlayer = MediaPlayer.create(context, R.raw.error)
     }
 
     fun setSoundEnabled(enabled: Boolean) {
         soundEnabled = enabled
     }
 
-    fun playSix() {
-        if (!soundEnabled) return
-        sixPlayer?.let {
-            if (it.isPlaying) it.seekTo(0)
-            it.start()
+    fun playCorrect(isSeven: Boolean) {
+        if (soundEnabled) {
+            val player = if (isSeven) sevenPlayer else sixPlayer
+            player?.let {
+                if (it.isPlaying) it.seekTo(0)
+                it.start()
+            }
         }
-        vibrate(30)
+        vibrate(if (isSeven) 60 else 30)
     }
 
-    fun playSeven() {
-        if (!soundEnabled) return
-        sevenPlayer?.let {
-            if (it.isPlaying) it.seekTo(0)
-            it.start()
+    fun playError() {
+        if (soundEnabled) {
+            errorPlayer?.let {
+                if (it.isPlaying) it.seekTo(0)
+                it.start()
+            }
         }
-        vibrate(60)
+        vibrate(100)
     }
 
     private fun vibrate(durationMs: Long) {
@@ -60,7 +65,9 @@ class SoundManager(private val context: Context) {
     fun release() {
         sixPlayer?.release()
         sevenPlayer?.release()
+        errorPlayer?.release()
         sixPlayer = null
         sevenPlayer = null
+        errorPlayer = null
     }
 }
