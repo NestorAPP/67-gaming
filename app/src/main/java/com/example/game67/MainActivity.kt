@@ -1,11 +1,14 @@
 package com.example.game67
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.view.View
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import kotlin.random.Random
 
 class MainActivity : AppCompatActivity() {
@@ -15,6 +18,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btn6: Button
     private lateinit var btn7: Button
     private lateinit var btnRestart: Button
+    private lateinit var btnSettings: ImageButton
+
+    private lateinit var soundManager: SoundManager
+    private lateinit var prefs: Prefs
 
     private var score = 0
     private var isGameActive = false
@@ -22,26 +29,48 @@ class MainActivity : AppCompatActivity() {
     private var timer: CountDownTimer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        prefs = Prefs(this)
+        applyTheme()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        soundManager = SoundManager(this)
+        soundManager.setSoundEnabled(prefs.soundEnabled)
 
         tvTimer = findViewById(R.id.tvTimer)
         tvScore = findViewById(R.id.tvScore)
         btn6 = findViewById(R.id.btn6)
         btn7 = findViewById(R.id.btn7)
         btnRestart = findViewById(R.id.btnRestart)
+        btnSettings = findViewById(R.id.btnSettings)
 
         btn6.setOnClickListener { onButtonClick(btn6, isSeven = false) }
         btn7.setOnClickListener { onButtonClick(btn7, isSeven = true) }
         btnRestart.setOnClickListener { startGame() }
+        btnSettings.setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
 
         startGame()
+    }
+
+    private fun applyTheme() {
+        when (prefs.themeMode) {
+            1 -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+            2 -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            else -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        soundManager.setSoundEnabled(prefs.soundEnabled)
     }
 
     private fun startGame() {
         score = 0
         isGameActive = true
-        tvScore.text = "Очки: 0"
+        tvScore.text = getString(R.string.score, 0)
         tvTimer.text = "67"
         btnRestart.visibility = View.GONE
         btn6.isEnabled = true
@@ -71,6 +100,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun onButtonClick(button: Button, isSeven: Boolean) {
         if (!isGameActive) return
+
+        if (isSeven) soundManager.playSeven() else soundManager.playSix()
+
         val correct = (isSeven && button == btn7 && currentTarget == btn7) ||
                 (!isSeven && button == btn6 && currentTarget == btn6)
 
@@ -79,7 +111,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             score = maxOf(0, score - 1)
         }
-        tvScore.text = "Очки: $score"
+        tvScore.text = getString(R.string.score, score)
         spawnNext()
     }
 
@@ -88,12 +120,13 @@ class MainActivity : AppCompatActivity() {
         btn6.isEnabled = false
         btn7.isEnabled = false
         btnRestart.visibility = View.VISIBLE
-        tvTimer.text = "Финиш!"
-        tvScore.text = "Твой результат: $score"
+        tvTimer.text = getString(R.string.finish)
+        tvScore.text = getString(R.string.final_score, score)
     }
 
     override fun onDestroy() {
         super.onDestroy()
         timer?.cancel()
+        soundManager.release()
     }
 }
