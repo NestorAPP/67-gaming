@@ -7,7 +7,6 @@ import android.os.CountDownTimer
 import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
-import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -17,8 +16,10 @@ import kotlin.random.Random
 class MainActivity : AppCompatActivity() {
 
     private lateinit var rootLayout: RelativeLayout
+    private lateinit var tvPlayerName: TextView
     private lateinit var tvTimer: TextView
     private lateinit var tvScore: TextView
+    private lateinit var tvBest: TextView
     private lateinit var btn6: Button
     private lateinit var btn7: Button
     private lateinit var btnRestart: Button
@@ -42,14 +43,17 @@ class MainActivity : AppCompatActivity() {
         soundManager.setSoundEnabled(prefs.soundEnabled)
 
         rootLayout = findViewById(R.id.rootLayout)
+        tvPlayerName = findViewById(R.id.tvPlayerName)
         tvTimer = findViewById(R.id.tvTimer)
         tvScore = findViewById(R.id.tvScore)
+        tvBest = findViewById(R.id.tvBest)
         btn6 = findViewById(R.id.btn6)
         btn7 = findViewById(R.id.btn7)
         btnRestart = findViewById(R.id.btnRestart)
         btnSettings = findViewById(R.id.btnSettings)
 
         applyColors()
+        updatePlayerInfo()
 
         btn6.setOnClickListener { onButtonClick(btn6, isSeven = false) }
         btn7.setOnClickListener { onButtonClick(btn7, isSeven = true) }
@@ -78,8 +82,10 @@ class MainActivity : AppCompatActivity() {
         val textSecondary = if (isDark) Color.parseColor("#AAAAAA") else Color.parseColor("#666666")
 
         rootLayout.setBackgroundColor(bg)
+        tvPlayerName.setTextColor(textSecondary)
         tvTimer.setTextColor(textPrimary)
         tvScore.setTextColor(textSecondary)
+        tvBest.setTextColor(textSecondary)
     }
 
     private fun isSystemDark(): Boolean {
@@ -88,10 +94,18 @@ class MainActivity : AppCompatActivity() {
         return nightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES
     }
 
+    private fun updatePlayerInfo() {
+        val nickname = prefs.currentNickname
+        tvPlayerName.text = "Игрок: $nickname"
+        val best = prefs.getBestScoreForNickname(nickname)
+        tvBest.text = "🏆 Рекорд: $best"
+    }
+
     override fun onResume() {
         super.onResume()
         soundManager.setSoundEnabled(prefs.soundEnabled)
         applyColors()
+        updatePlayerInfo()
     }
 
     private fun startGame() {
@@ -147,9 +161,22 @@ class MainActivity : AppCompatActivity() {
         isGameActive = false
         btn6.isEnabled = false
         btn7.isEnabled = false
-        btnRestart.visibility = View.VISIBLE
-        tvTimer.text = getString(R.string.finish)
-        tvScore.text = getString(R.string.final_score, score)
+        timer?.cancel()
+
+        // Сохраняем рекорд
+        val nickname = prefs.currentNickname
+        val record = ScoreRecord(
+            nickname = nickname,
+            score = score,
+            date = System.currentTimeMillis()
+        )
+        prefs.addRecord(record)
+
+        // Открываем экран результата
+        val intent = Intent(this, ResultActivity::class.java)
+        intent.putExtra("score", score)
+        startActivity(intent)
+        finish()
     }
 
     override fun onDestroy() {
