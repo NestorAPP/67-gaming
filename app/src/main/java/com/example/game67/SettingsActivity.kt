@@ -21,7 +21,6 @@ class SettingsActivity : AppCompatActivity() {
         val btnShare = findViewById<Button>(R.id.btnShare)
         val btnBack = findViewById<Button>(R.id.btnBack)
 
-        // Звук
         if (prefs.soundEnabled) rgSound.check(R.id.rbSoundOn)
         else rgSound.check(R.id.rbSoundOff)
 
@@ -29,7 +28,6 @@ class SettingsActivity : AppCompatActivity() {
             prefs.soundEnabled = checkedId == R.id.rbSoundOn
         }
 
-        // Тема
         when (prefs.themeMode) {
             1 -> rgTheme.check(R.id.rbThemeLight)
             2 -> rgTheme.check(R.id.rbThemeDark)
@@ -43,10 +41,10 @@ class SettingsActivity : AppCompatActivity() {
                 else -> 0
             }
             prefs.themeMode = mode
-            applyTheme(mode)
+            applyNightMode(mode)
+            recreate()
         }
 
-        // Поделиться
         btnShare.setOnClickListener {
             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                 type = "text/plain"
@@ -58,12 +56,11 @@ class SettingsActivity : AppCompatActivity() {
         btnBack.setOnClickListener { finish() }
     }
 
-    private fun applyTheme(mode: Int) {
+    private fun applyNightMode(mode: Int) {
         when (mode) {
             1 -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
             2 -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
             else -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         }
-        recreate()
     }
 }
