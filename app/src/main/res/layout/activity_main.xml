@@ -1,60 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="24dp"
-    android:background="#111111">
+    android:background="?android:attr/colorBackground">
 
-    <TextView
-        android:id="@+id/tvTimer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="67"
-        android:textSize="48sp"
-        android:textColor="#FFFFFF"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/tvScore"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Очки: 0"
-        android:textSize="24sp"
-        android:textColor="#AAAAAA"
-        android:layout_marginTop="8dp" />
+    <ImageButton
+        android:id="@+id/btnSettings"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="16dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:src="@android:drawable/ic_menu_preferences"
+        android:contentDescription="@string/settings" />
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="horizontal"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
         android:gravity="center"
-        android:layout_marginTop="32dp">
+        android:padding="24dp">
 
-        <Button
-            android:id="@+id/btn6"
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:text="6"
+        <TextView
+            android:id="@+id/tvTimer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="67"
             android:textSize="48sp"
-            android:layout_marginEnd="24dp" />
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvScore"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/score"
+            android:textSize="24sp"
+            android:layout_marginTop="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="32dp">
+
+            <Button
+                android:id="@+id/btn6"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:text="6"
+                android:textSize="48sp"
+                android:layout_marginEnd="24dp" />
+
+            <Button
+                android:id="@+id/btn7"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:text="7"
+                android:textSize="48sp" />
+        </LinearLayout>
 
         <Button
-            android:id="@+id/btn7"
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:text="7"
-            android:textSize="48sp" />
+            android:id="@+id/btnRestart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/restart"
+            android:visibility="gone"
+            android:layout_marginTop="24dp" />
+
     </LinearLayout>
 
-    <Button
-        android:id="@+id/btnRestart"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Заново"
-        android:visibility="gone"
-        android:layout_marginTop="24dp" />
-
-</LinearLayout>
+</RelativeLayout>
