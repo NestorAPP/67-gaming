@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">67</string>
+    <string name="score">Очки: %1$d</string>
+    <string name="final_score">Твой результат: %1$d</string>
+    <string name="finish">Финиш!</string>
+    <string name="restart">Заново</string>
+    <string name="settings">Настройки</string>
+    <string name="sound">Звук</string>
+    <string name="sound_on">Со звуком</string>
+    <string name="sound_off">Беззвучный</string>
+    <string name="theme">Тема</string>
+    <string name="theme_light">Светлая</string>
+    <string name="theme_dark">Тёмная</string>
+    <string name="theme_system">Системная</string>
+    <string name="share">Поделиться приложением</string>
+    <string name="back">Назад</string>
+</resources>
