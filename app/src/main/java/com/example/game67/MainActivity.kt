@@ -1,11 +1,14 @@
 package com.example.game67
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
+import android.widget.LinearLayout
+import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
@@ -13,6 +16,7 @@ import kotlin.random.Random
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var rootLayout: RelativeLayout
     private lateinit var tvTimer: TextView
     private lateinit var tvScore: TextView
     private lateinit var btn6: Button
@@ -30,19 +34,22 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         prefs = Prefs(this)
-        applyTheme()
+        applyNightMode()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         soundManager = SoundManager(this)
         soundManager.setSoundEnabled(prefs.soundEnabled)
 
+        rootLayout = findViewById(R.id.rootLayout)
         tvTimer = findViewById(R.id.tvTimer)
         tvScore = findViewById(R.id.tvScore)
         btn6 = findViewById(R.id.btn6)
         btn7 = findViewById(R.id.btn7)
         btnRestart = findViewById(R.id.btnRestart)
         btnSettings = findViewById(R.id.btnSettings)
+
+        applyColors()
 
         btn6.setOnClickListener { onButtonClick(btn6, isSeven = false) }
         btn7.setOnClickListener { onButtonClick(btn7, isSeven = true) }
@@ -54,7 +61,7 @@ class MainActivity : AppCompatActivity() {
         startGame()
     }
 
-    private fun applyTheme() {
+    private fun applyNightMode() {
         when (prefs.themeMode) {
             1 -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
             2 -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
@@ -62,9 +69,29 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun applyColors() {
+        val isDark = prefs.themeMode == 2 ||
+                (prefs.themeMode == 0 && isSystemDark())
+
+        val bg = if (isDark) Color.parseColor("#111111") else Color.parseColor("#F5F5F5")
+        val textPrimary = if (isDark) Color.parseColor("#FFFFFF") else Color.parseColor("#111111")
+        val textSecondary = if (isDark) Color.parseColor("#AAAAAA") else Color.parseColor("#666666")
+
+        rootLayout.setBackgroundColor(bg)
+        tvTimer.setTextColor(textPrimary)
+        tvScore.setTextColor(textSecondary)
+    }
+
+    private fun isSystemDark(): Boolean {
+        val nightMode = resources.configuration.uiMode and
+                android.content.res.Configuration.UI_MODE_NIGHT_MASK
+        return nightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES
+    }
+
     override fun onResume() {
         super.onResume()
         soundManager.setSoundEnabled(prefs.soundEnabled)
+        applyColors()
     }
 
     private fun startGame() {
@@ -101,16 +128,17 @@ class MainActivity : AppCompatActivity() {
     private fun onButtonClick(button: Button, isSeven: Boolean) {
         if (!isGameActive) return
 
-        if (isSeven) soundManager.playSeven() else soundManager.playSix()
+        val isActive = (isSeven && currentTarget == btn7) ||
+                (!isSeven && currentTarget == btn6)
 
-        val correct = (isSeven && button == btn7 && currentTarget == btn7) ||
-                (!isSeven && button == btn6 && currentTarget == btn6)
-
-        if (correct) {
+        if (isActive) {
             score++
+            soundManager.playCorrect(isSeven)
         } else {
             score = maxOf(0, score - 1)
+            soundManager.playError()
         }
+
         tvScore.text = getString(R.string.score, score)
         spawnNext()
     }
