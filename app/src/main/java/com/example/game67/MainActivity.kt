@@ -43,7 +43,6 @@ class MainActivity : AppCompatActivity() {
     private var currentTarget: Button? = null
     private var timer: CountDownTimer? = null
 
-    // Золотая цифра
     private var isGoldenActive = false
     private var goldenButton: Button? = null
     private val handler = Handler(Looper.getMainLooper())
@@ -161,11 +160,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun scheduleGolden() {
-        // Первое появление золотой — через 15 секунд
         goldenSchedulerRunnable = Runnable {
             if (!isGameActive) return@Runnable
             activateGolden()
-            // Следующее появление — ещё через 15 секунд
             scheduleGolden()
         }
         handler.postDelayed(goldenSchedulerRunnable!!, 15_000L)
@@ -174,12 +171,10 @@ class MainActivity : AppCompatActivity() {
     private fun activateGolden() {
         if (!isGameActive) return
         isGoldenActive = true
-        // Случайно выбираем кнопку — 6 или 7
         goldenButton = if (Random.nextBoolean()) btn7 else btn6
         goldenButton?.setBackgroundColor(Color.parseColor("#FFD700"))
         goldenButton?.setTextColor(Color.parseColor("#111111"))
 
-        // Через 3 секунды выключаем
         goldenRunnable = Runnable {
             deactivateGolden()
         }
@@ -204,9 +199,13 @@ class MainActivity : AppCompatActivity() {
     private fun onButtonClick(button: Button, isSeven: Boolean) {
         if (!isGameActive) return
 
-        animatePress(button)
+        // Быстрая анимация отскока
+        button.animate()
+            .scaleX(0.9f).scaleY(0.9f).setDuration(50)
+            .withEndAction {
+                button.animate().scaleX(1f).scaleY(1f).setDuration(100).start()
+            }.start()
 
-        // Проверяем — золотая ли это кнопка
         if (isGoldenActive && button == goldenButton) {
             score += 5
             soundManager.playCorrect(isSeven)
@@ -257,31 +256,6 @@ class MainActivity : AppCompatActivity() {
                 tvCombo.visibility = View.GONE
             }
         }
-    }
-
-    private fun animatePress(button: Button) {
-        val scaleDown = ObjectAnimator.ofFloat(button, "scaleX", 1f, 0.85f).apply {
-            duration = 80
-        }
-        val scaleDownY = ObjectAnimator.ofFloat(button, "scaleY", 1f, 0.85f).apply {
-            duration = 80
-        }
-        val scaleUp = ObjectAnimator.ofFloat(button, "scaleX", 0.85f, 1f).apply {
-            duration = 150
-            interpolator = OvershootInterpolator()
-        }
-        val scaleUpY = ObjectAnimator.ofFloat(button, "scaleY", 0.85f, 1f).apply {
-            duration = 150
-            interpolator = OvershootInterpolator()
-        }
-        scaleDown.start()
-        scaleDownY.start()
-        scaleDown.addListener(object : android.animation.AnimatorListenerAdapter() {
-            override fun onAnimationEnd(animation: android.animation.Animator) {
-                scaleUp.start()
-                scaleUpY.start()
-            }
-        })
     }
 
     private fun shakeButton(button: Button) {
