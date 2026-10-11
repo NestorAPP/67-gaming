@@ -5,6 +5,8 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.OvershootInterpolator
@@ -35,9 +37,18 @@ class MainActivity : AppCompatActivity() {
     private lateinit var prefs: Prefs
 
     private var score = 0
+    private var combo = 0
+    private var multiplier = 1
     private var isGameActive = false
     private var currentTarget: Button? = null
     private var timer: CountDownTimer? = null
+
+    // Золотая цифра
+    private var isGoldenActive = false
+    private var goldenButton: Button? = null
+    private val handler = Handler(Looper.getMainLooper())
+    private var goldenRunnable: Runnable? = null
+    private var goldenSchedulerRunnable: Runnable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         prefs = Prefs(this)
@@ -118,12 +129,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun startGame() {
         score = 0
+        combo = 0
+        multiplier = 1
         isGameActive = true
+        isGoldenActive = false
+        goldenButton = null
         tvScore.text = getString(R.string.score, 0)
         tvTimer.text = "67"
+        tvCombo.visibility = View.GONE
         progressBar.max = 67
         progressBar.progress = 67
-        tvCombo.visibility = View.GONE
         btnRestart.visibility = View.GONE
         btn6.isEnabled = true
         btn7.isEnabled = true
@@ -142,6 +157,40 @@ class MainActivity : AppCompatActivity() {
         }.start()
 
         spawnNext()
+        scheduleGolden()
+    }
+
+    private fun scheduleGolden() {
+        // Первое появление золотой — через 15 секунд
+        goldenSchedulerRunnable = Runnable {
+            if (!isGameActive) return@Runnable
+            activateGolden()
+            // Следующее появление — ещё через 15 секунд
+            scheduleGolden()
+        }
+        handler.postDelayed(goldenSchedulerRunnable!!, 15_000L)
+    }
+
+    private fun activateGolden() {
+        if (!isGameActive) return
+        isGoldenActive = true
+        // Случайно выбираем кнопку — 6 или 7
+        goldenButton = if (Random.nextBoolean()) btn7 else btn6
+        goldenButton?.setBackgroundColor(Color.parseColor("#FFD700"))
+        goldenButton?.setTextColor(Color.parseColor("#111111"))
+
+        // Через 3 секунды выключаем
+        goldenRunnable = Runnable {
+            deactivateGolden()
+        }
+        handler.postDelayed(goldenRunnable!!, 3_000L)
+    }
+
+    private fun deactivateGolden() {
+        goldenButton?.setBackgroundColor(Color.parseColor("#6200EE"))
+        goldenButton?.setTextColor(Color.parseColor("#FFFFFF"))
+        isGoldenActive = false
+        goldenButton = null
     }
 
     private fun spawnNext() {
@@ -157,14 +206,31 @@ class MainActivity : AppCompatActivity() {
 
         animatePress(button)
 
+        // Проверяем — золотая ли это кнопка
+        if (isGoldenActive && button == goldenButton) {
+            score += 5
+            soundManager.playCorrect(isSeven)
+            showFlyingScore(button, "+5", Color.parseColor("#FFD700"))
+            deactivateGolden()
+            handler.removeCallbacks(goldenRunnable!!)
+            tvScore.text = getString(R.string.score, score)
+            spawnNext()
+            return
+        }
+
         val isActive = (isSeven && currentTarget == btn7) ||
                 (!isSeven && currentTarget == btn6)
 
         if (isActive) {
-            score++
+            combo++
+            updateMultiplier()
+            score += multiplier
             soundManager.playCorrect(isSeven)
-            showFlyingScore(button, "+1", Color.parseColor("#4CAF50"))
+            showFlyingScore(button, "+$multiplier", Color.parseColor("#4CAF50"))
         } else {
+            combo = 0
+            multiplier = 1
+            tvCombo.visibility = View.GONE
             score = maxOf(0, score - 1)
             soundManager.playError()
             showFlyingScore(button, "-1", Color.parseColor("#F44336"))
@@ -173,6 +239,24 @@ class MainActivity : AppCompatActivity() {
 
         tvScore.text = getString(R.string.score, score)
         spawnNext()
+    }
+
+    private fun updateMultiplier() {
+        val newMultiplier = when {
+            combo >= 10 -> 3
+            combo >= 5 -> 2
+            else -> 1
+        }
+
+        if (newMultiplier != multiplier) {
+            multiplier = newMultiplier
+            if (multiplier > 1) {
+                tvCombo.text = "COMBO ×$multiplier"
+                tvCombo.visibility = View.VISIBLE
+            } else {
+                tvCombo.visibility = View.GONE
+            }
+        }
     }
 
     private fun animatePress(button: Button) {
@@ -258,6 +342,7 @@ class MainActivity : AppCompatActivity() {
         btn6.isEnabled = false
         btn7.isEnabled = false
         timer?.cancel()
+        handler.removeCallbacksAndMessages(null)
 
         val nickname = prefs.currentNickname
         val record = ScoreRecord(
@@ -276,6 +361,7 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         timer?.cancel()
+        handler.removeCallbacksAndMessages(null)
         soundManager.release()
     }
 }
