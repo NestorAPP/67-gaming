@@ -1,17 +1,14 @@
 package com.example.game67
 
 import android.animation.ObjectAnimator
-import android.animation.ValueAnimator
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.os.CountDownTimer
-import android.view.Gravity
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.OvershootInterpolator
 import android.widget.Button
-import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
@@ -23,7 +20,6 @@ import kotlin.random.Random
 class MainActivity : AppCompatActivity() {
 
     private lateinit var rootLayout: RelativeLayout
-    private lateinit var gameArea: FrameLayout
     private lateinit var tvPlayerName: TextView
     private lateinit var tvTimer: TextView
     private lateinit var tvScore: TextView
@@ -53,7 +49,6 @@ class MainActivity : AppCompatActivity() {
         soundManager.setSoundEnabled(prefs.soundEnabled)
 
         rootLayout = findViewById(R.id.rootLayout)
-        gameArea = findViewById(R.id.gameArea)
         tvPlayerName = findViewById(R.id.tvPlayerName)
         tvTimer = findViewById(R.id.tvTimer)
         tvScore = findViewById(R.id.tvScore)
@@ -160,7 +155,6 @@ class MainActivity : AppCompatActivity() {
     private fun onButtonClick(button: Button, isSeven: Boolean) {
         if (!isGameActive) return
 
-        // Анимация нажатия — «пружинка»
         animatePress(button)
 
         val isActive = (isSeven && currentTarget == btn7) ||
@@ -222,7 +216,6 @@ class MainActivity : AppCompatActivity() {
             setTypeface(null, android.graphics.Typeface.BOLD)
         }
 
-        // Координаты кнопки относительно rootLayout
         val loc = IntArray(2)
         anchor.getLocationInWindow(loc)
 
