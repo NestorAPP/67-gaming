@@ -15,14 +15,26 @@ import java.util.Locale
 class ResultActivity : AppCompatActivity() {
 
     private lateinit var prefs: Prefs
+    private lateinit var soundManager: SoundManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         prefs = Prefs(this)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_result)
 
+        soundManager = SoundManager(this)
+        soundManager.setSoundEnabled(prefs.soundEnabled)
+
         val score = intent.getIntExtra("score", 0)
+        val isNewRecord = intent.getBooleanExtra("isNewRecord", false)
         val nickname = prefs.currentNickname
+
+        // Проигрываем звук финала — он доиграет, потому что экран живёт
+        if (isNewRecord) {
+            soundManager.playWin()
+        } else {
+            soundManager.playLose()
+        }
 
         val tvNewRecord = findViewById<TextView>(R.id.tvNewRecord)
         val tvResultScore = findViewById<TextView>(R.id.tvResultScore)
@@ -34,15 +46,6 @@ class ResultActivity : AppCompatActivity() {
         tvResultScore.text = "Твой результат: $score"
         tvPlayerLabel.text = "Игрок: $nickname"
 
-        // Проверяем — новый ли это рекорд для этого игрока
-        val allRecords = prefs.getAllRecords()
-        val playerBestBefore = allRecords
-            .filter { it.nickname == nickname }
-            .sortedByDescending { it.date }
-            .drop(1) // исключаем только что добавленную запись
-            .maxOfOrNull { it.score } ?: 0
-
-        val isNewRecord = score > playerBestBefore && score > 0
         if (isNewRecord) {
             tvNewRecord.visibility = TextView.VISIBLE
         }
@@ -94,7 +97,6 @@ class ResultActivity : AppCompatActivity() {
             lp.setMargins(0, 6, 0, 0)
             row.layoutParams = lp
 
-            // Место
             val tvPlace = TextView(this)
             tvPlace.text = "${index + 1}."
             tvPlace.setTextColor(Color.parseColor("#FF5722"))
@@ -102,7 +104,6 @@ class ResultActivity : AppCompatActivity() {
             tvPlace.setPadding(0, 0, 16, 0)
             row.addView(tvPlace)
 
-            // Ник
             val tvNick = TextView(this)
             tvNick.text = record.nickname
             tvNick.setTextColor(Color.parseColor("#FFFFFF"))
@@ -111,7 +112,6 @@ class ResultActivity : AppCompatActivity() {
             tvNick.layoutParams = nickLp
             row.addView(tvNick)
 
-            // Очки
             val tvScore = TextView(this)
             tvScore.text = record.score.toString()
             tvScore.setTextColor(Color.parseColor("#FFFFFF"))
@@ -119,7 +119,6 @@ class ResultActivity : AppCompatActivity() {
             tvScore.setPadding(16, 0, 16, 0)
             row.addView(tvScore)
 
-            // Дата
             val tvDate = TextView(this)
             tvDate.text = sdf.format(Date(record.date))
             tvDate.setTextColor(Color.parseColor("#AAAAAA"))
@@ -128,5 +127,10 @@ class ResultActivity : AppCompatActivity() {
 
             container.addView(row)
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        soundManager.release()
     }
 }
