@@ -142,6 +142,8 @@ class MainActivity : AppCompatActivity() {
         btn6.isEnabled = true
         btn7.isEnabled = true
 
+        soundManager.playStart()
+
         timer?.cancel()
         timer = object : CountDownTimer(67_000L, 1000L) {
             override fun onTick(millisUntilFinished: Long) {
@@ -199,7 +201,6 @@ class MainActivity : AppCompatActivity() {
     private fun onButtonClick(button: Button, isSeven: Boolean) {
         if (!isGameActive) return
 
-        // Быстрая анимация отскока
         button.animate()
             .scaleX(0.9f).scaleY(0.9f).setDuration(50)
             .withEndAction {
@@ -222,16 +223,26 @@ class MainActivity : AppCompatActivity() {
 
         if (isActive) {
             combo++
+            val oldMultiplier = multiplier
             updateMultiplier()
+            // Если только что достигли ×2 — играем «Гений»
+            if (oldMultiplier == 1 && multiplier == 2) {
+                soundManager.playGenius()
+            }
             score += multiplier
             soundManager.playCorrect(isSeven)
             showFlyingScore(button, "+$multiplier", Color.parseColor("#4CAF50"))
         } else {
+            // Если было комбо — играем «Ну тупой, реально»
+            if (multiplier > 1) {
+                soundManager.playDumb()
+            } else {
+                soundManager.playError()
+            }
             combo = 0
             multiplier = 1
             tvCombo.visibility = View.GONE
             score = maxOf(0, score - 1)
-            soundManager.playError()
             showFlyingScore(button, "-1", Color.parseColor("#F44336"))
             shakeButton(button)
         }
@@ -319,12 +330,21 @@ class MainActivity : AppCompatActivity() {
         handler.removeCallbacksAndMessages(null)
 
         val nickname = prefs.currentNickname
+        val bestBefore = prefs.getBestScoreForNickname(nickname)
+
         val record = ScoreRecord(
             nickname = nickname,
             score = score,
             date = System.currentTimeMillis()
         )
         prefs.addRecord(record)
+
+        // Звук финала: win если побил рекорд, lose если нет
+        if (score > bestBefore && score > 0) {
+            soundManager.playWin()
+        } else {
+            soundManager.playLose()
+        }
 
         val intent = Intent(this, ResultActivity::class.java)
         intent.putExtra("score", score)
