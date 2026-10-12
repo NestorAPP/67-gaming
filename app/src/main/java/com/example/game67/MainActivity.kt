@@ -225,7 +225,6 @@ class MainActivity : AppCompatActivity() {
             combo++
             val oldMultiplier = multiplier
             updateMultiplier()
-            // Если только что достигли ×2 — играем «Гений»
             if (oldMultiplier == 1 && multiplier == 2) {
                 soundManager.playGenius()
             }
@@ -233,7 +232,6 @@ class MainActivity : AppCompatActivity() {
             soundManager.playCorrect(isSeven)
             showFlyingScore(button, "+$multiplier", Color.parseColor("#4CAF50"))
         } else {
-            // Если было комбо — играем «Ну тупой, реально»
             if (multiplier > 1) {
                 soundManager.playDumb()
             } else {
@@ -339,15 +337,12 @@ class MainActivity : AppCompatActivity() {
         )
         prefs.addRecord(record)
 
-        // Звук финала: win если побил рекорд, lose если нет
-        if (score > bestBefore && score > 0) {
-            soundManager.playWin()
-        } else {
-            soundManager.playLose()
-        }
+        // Определяем — побит ли рекорд. Передаём флаг в ResultActivity
+        val isNewRecord = score > bestBefore && score > 0
 
         val intent = Intent(this, ResultActivity::class.java)
         intent.putExtra("score", score)
+        intent.putExtra("isNewRecord", isNewRecord)
         startActivity(intent)
         finish()
     }
