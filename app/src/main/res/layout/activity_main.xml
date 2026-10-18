@@ -16,6 +16,35 @@
         android:textSize="18sp"
         android:textStyle="bold" />
 
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_toEndOf="@id/tvCoins"
+        android:layout_marginTop="12dp"
+        android:layout_marginStart="16dp"
+        android:orientation="horizontal">
+
+        <!-- Кнопка ежедневного бонуса -->
+        <TextView
+            android:id="@+id/btnDailyBonus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🎁"
+            android:textSize="24sp"
+            android:padding="4dp"
+            android:layout_marginEnd="8dp" />
+
+        <!-- Кнопка выбора аватара -->
+        <TextView
+            android:id="@+id/btnAvatars"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🎭"
+            android:textSize="24sp"
+            android:padding="4dp" />
+    </LinearLayout>
+
     <ImageButton
         android:id="@+id/btnSettings"
         android:layout_width="48dp"
@@ -34,12 +63,27 @@
         android:gravity="center"
         android:padding="24dp">
 
-        <TextView
-            android:id="@+id/tvPlayerName"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:layout_marginBottom="8dp" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:id="@+id/tvCurrentAvatar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="😀"
+                android:textSize="24sp"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:id="@+id/tvPlayerName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/tvTimer"
