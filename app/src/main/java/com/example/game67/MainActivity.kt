@@ -1,6 +1,7 @@
 package com.example.game67
 
 import android.animation.ObjectAnimator
+import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
@@ -23,6 +24,9 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var rootLayout: RelativeLayout
     private lateinit var tvCoins: TextView
+    private lateinit var btnDailyBonus: TextView
+    private lateinit var btnAvatars: TextView
+    private lateinit var tvCurrentAvatar: TextView
     private lateinit var tvPlayerName: TextView
     private lateinit var tvTimer: TextView
     private lateinit var tvScore: TextView
@@ -36,6 +40,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var soundManager: SoundManager
     private lateinit var prefs: Prefs
+    private lateinit var dailyBonus: DailyBonusManager
 
     private var score = 0
     private var combo = 0
@@ -52,6 +57,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         prefs = Prefs(this)
+        dailyBonus = DailyBonusManager(prefs)
+        
         applyNightMode()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -61,6 +68,9 @@ class MainActivity : AppCompatActivity() {
 
         rootLayout = findViewById(R.id.rootLayout)
         tvCoins = findViewById(R.id.tvCoins)
+        btnDailyBonus = findViewById(R.id.btnDailyBonus)
+        btnAvatars = findViewById(R.id.btnAvatars)
+        tvCurrentAvatar = findViewById(R.id.tvCurrentAvatar)
         tvPlayerName = findViewById(R.id.tvPlayerName)
         tvTimer = findViewById(R.id.tvTimer)
         tvScore = findViewById(R.id.tvScore)
@@ -78,13 +88,65 @@ class MainActivity : AppCompatActivity() {
         btn6.setOnClickListener { onButtonClick(btn6, isSeven = false) }
         btn7.setOnClickListener { onButtonClick(btn7, isSeven = true) }
         btnRestart.setOnClickListener { startGame() }
+        
         btnSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
+        
+        btnAvatars.setOnClickListener {
+            startActivity(Intent(this, AvatarActivity::class.java))
+        }
+
+        btnDailyBonus.setOnClickListener {
+            showDailyBonusDialog()
+        }
+
+        // Проверяем бонус при запуске
+        checkStartupBonus()
 
         startGame()
     }
 
+    private fun checkStartupBonus() {
+        val reward = dailyBonus.checkAndClaimBonus()
+        if (reward > 0) {
+            updatePlayerInfo() // Обновляем монеты
+            showBonusRewardDialog(reward, dailyBonus.getCurrentStreak())
+        }
+    }
+
+    private fun showDailyBonusDialog() {
+        val today = prefs.getCurrentDay()
+        if (today == prefs.lastLoginDay) {
+            // Бонус уже получен
+            AlertDialog.Builder(this)
+                .setTitle("🎁 Ежедневный бонус")
+                .setMessage("Ты уже забрал бонус сегодня!\n\nТекущая серия: ${prefs.loginStreak} дн.\nВозвращайся завтра за наградой.")
+                .setPositiveButton("ОК", null)
+                .show()
+        } else {
+            // Бонус можно получить (например, после сброса времени)
+            val reward = dailyBonus.checkAndClaimBonus()
+            if (reward > 0) {
+                updatePlayerInfo()
+                showBonusRewardDialog(reward, dailyBonus.getCurrentStreak())
+            }
+        }
+    }
+
+    private fun showBonusRewardDialog(reward: Int, streak: Int) {
+        AlertDialog.Builder(this)
+            .setTitle("🎁 Ежедневный бонус!")
+            .setMessage("День $streak!\nТы получаешь $reward 🪙")
+            .setPositiveButton("Забрать") { _, _ -> }
+            .show()
+    }
+
+    // ... ОСТАЛЬНОЙ КОД (applyNightMode, applyColors, isSystemDark, updatePlayerInfo, 
+    // onResume, startGame, scheduleGolden, activateGolden, deactivateGolden, spawnNext, 
+    // onButtonClick, updateMultiplier, shakeButton, showFlyingScore, endGame, onDestroy) 
+    // ОСТАЕТСЯ БЕЗ ИЗМЕНЕНИЙ
+    
     private fun applyNightMode() {
         when (prefs.themeMode) {
             1 -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
@@ -94,9 +156,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun applyColors() {
-        val isDark = prefs.themeMode == 2 ||
-                (prefs.themeMode == 0 && isSystemDark())
-
+        val isDark = prefs.themeMode == 2 || (prefs.themeMode == 0 && isSystemDark())
         val bg = if (isDark) Color.parseColor("#111111") else Color.parseColor("#F5F5F5")
         val textPrimary = if (isDark) Color.parseColor("#FFFFFF") else Color.parseColor("#111111")
         val textSecondary = if (isDark) Color.parseColor("#AAAAAA") else Color.parseColor("#666666")
@@ -107,17 +167,20 @@ class MainActivity : AppCompatActivity() {
         tvTimer.setTextColor(textPrimary)
         tvScore.setTextColor(textSecondary)
         tvBest.setTextColor(textSecondary)
+        tvCurrentAvatar.setTextColor(textPrimary)
+        btnAvatars.setTextColor(textPrimary)
+        btnDailyBonus.setTextColor(textPrimary)
     }
 
     private fun isSystemDark(): Boolean {
-        val nightMode = resources.configuration.uiMode and
-                android.content.res.Configuration.UI_MODE_NIGHT_MASK
+        val nightMode = resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
         return nightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES
     }
 
     private fun updatePlayerInfo() {
         val nickname = prefs.currentNickname
         tvPlayerName.text = "Игрок: $nickname"
+        tvCurrentAvatar.text = prefs.currentAvatar
         val best = prefs.getBestScoreForNickname(nickname)
         tvBest.text = "🏆 Рекорд: $best"
         tvCoins.text = "🪙 ${prefs.coins}"
@@ -155,10 +218,7 @@ class MainActivity : AppCompatActivity() {
                 tvTimer.text = secondsLeft.toString()
                 progressBar.progress = secondsLeft
             }
-
-            override fun onFinish() {
-                endGame()
-            }
+            override fun onFinish() { endGame() }
         }.start()
 
         spawnNext()
@@ -180,10 +240,7 @@ class MainActivity : AppCompatActivity() {
         goldenButton = if (Random.nextBoolean()) btn7 else btn6
         goldenButton?.setBackgroundColor(Color.parseColor("#FFD700"))
         goldenButton?.setTextColor(Color.parseColor("#111111"))
-
-        goldenRunnable = Runnable {
-            deactivateGolden()
-        }
+        goldenRunnable = Runnable { deactivateGolden() }
         handler.postDelayed(goldenRunnable!!, 3_000L)
     }
 
@@ -204,12 +261,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun onButtonClick(button: Button, isSeven: Boolean) {
         if (!isGameActive) return
-
-        button.animate()
-            .scaleX(0.9f).scaleY(0.9f).setDuration(50)
-            .withEndAction {
-                button.animate().scaleX(1f).scaleY(1f).setDuration(100).start()
-            }.start()
+        button.animate().scaleX(0.9f).scaleY(0.9f).setDuration(50).withEndAction {
+            button.animate().scaleX(1f).scaleY(1f).setDuration(100).start()
+        }.start()
 
         if (isGoldenActive && button == goldenButton) {
             score += 5
@@ -222,25 +276,17 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        val isActive = (isSeven && currentTarget == btn7) ||
-                (!isSeven && currentTarget == btn6)
-
+        val isActive = (isSeven && currentTarget == btn7) || (!isSeven && currentTarget == btn6)
         if (isActive) {
             combo++
             val oldMultiplier = multiplier
             updateMultiplier()
-            if (oldMultiplier == 1 && multiplier == 2) {
-                soundManager.playGenius()
-            }
+            if (oldMultiplier == 1 && multiplier == 2) soundManager.playGenius()
             score += multiplier
             soundManager.playCorrect(isSeven)
             showFlyingScore(button, "+$multiplier", Color.parseColor("#4CAF50"))
         } else {
-            if (multiplier > 1) {
-                soundManager.playDumb()
-            } else {
-                soundManager.playError()
-            }
+            if (multiplier > 1) soundManager.playDumb() else soundManager.playError()
             combo = 0
             multiplier = 1
             tvCombo.visibility = View.GONE
@@ -248,7 +294,6 @@ class MainActivity : AppCompatActivity() {
             showFlyingScore(button, "-1", Color.parseColor("#F44336"))
             shakeButton(button)
         }
-
         tvScore.text = getString(R.string.score, score)
         spawnNext()
     }
@@ -259,7 +304,6 @@ class MainActivity : AppCompatActivity() {
             combo >= 5 -> 2
             else -> 1
         }
-
         if (newMultiplier != multiplier) {
             multiplier = newMultiplier
             if (multiplier > 1) {
@@ -272,11 +316,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun shakeButton(button: Button) {
-        val shake = ObjectAnimator.ofFloat(button, "translationX",
-            0f, 15f, -15f, 10f, -10f, 5f, -5f, 0f).apply {
-            duration = 400
-        }
-        shake.start()
+        ObjectAnimator.ofFloat(button, "translationX", 0f, 15f, -15f, 10f, -10f, 5f, -5f, 0f).apply { duration = 400 }.start()
     }
 
     private fun showFlyingScore(anchor: Button, text: String, color: Int) {
@@ -286,37 +326,23 @@ class MainActivity : AppCompatActivity() {
             textSize = 32f
             setTypeface(null, android.graphics.Typeface.BOLD)
         }
-
         val loc = IntArray(2)
         anchor.getLocationInWindow(loc)
-
         val rootLoc = IntArray(2)
         rootLayout.getLocationInWindow(rootLoc)
-
         val x = (loc[0] - rootLoc[0] + anchor.width / 2f - 40f)
         val y = (loc[1] - rootLoc[1] - 40f)
 
-        val params = RelativeLayout.LayoutParams(
-            RelativeLayout.LayoutParams.WRAP_CONTENT,
-            RelativeLayout.LayoutParams.WRAP_CONTENT
-        )
+        val params = RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT)
         params.leftMargin = x.toInt()
         params.topMargin = y.toInt()
         tv.layoutParams = params
-
         rootLayout.addView(tv)
 
-        val moveUp = ObjectAnimator.ofFloat(tv, "translationY", 0f, -150f).apply {
-            duration = 800
-            interpolator = AccelerateDecelerateInterpolator()
-        }
-        val fadeOut = ObjectAnimator.ofFloat(tv, "alpha", 1f, 0f).apply {
-            duration = 800
-        }
-
+        val moveUp = ObjectAnimator.ofFloat(tv, "translationY", 0f, -150f).apply { duration = 800; interpolator = AccelerateDecelerateInterpolator() }
+        val fadeOut = ObjectAnimator.ofFloat(tv, "alpha", 1f, 0f).apply { duration = 800 }
         moveUp.start()
         fadeOut.start()
-
         fadeOut.addListener(object : android.animation.AnimatorListenerAdapter() {
             override fun onAnimationEnd(animation: android.animation.Animator) {
                 rootLayout.removeView(tv)
@@ -333,20 +359,11 @@ class MainActivity : AppCompatActivity() {
 
         val nickname = prefs.currentNickname
         val bestBefore = prefs.getBestScoreForNickname(nickname)
+        prefs.addRecord(ScoreRecord(nickname, score, System.currentTimeMillis()))
 
-        val record = ScoreRecord(
-            nickname = nickname,
-            score = score,
-            date = System.currentTimeMillis()
-        )
-        prefs.addRecord(record)
-
-        // ЛОГИКА НАЧИСЛЕНИЯ МОНЕТ
         var earnedCoins = score / 10
         val isNewRecord = score > bestBefore && score > 0
-        if (isNewRecord) {
-            earnedCoins += 10 // Бонус за рекорд
-        }
+        if (isNewRecord) earnedCoins += 10
         prefs.addCoins(earnedCoins)
 
         val intent = Intent(this, ResultActivity::class.java)
