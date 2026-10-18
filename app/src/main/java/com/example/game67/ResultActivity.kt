@@ -27,9 +27,9 @@ class ResultActivity : AppCompatActivity() {
 
         val score = intent.getIntExtra("score", 0)
         val isNewRecord = intent.getBooleanExtra("isNewRecord", false)
+        val earnedCoins = intent.getIntExtra("earnedCoins", 0)
         val nickname = prefs.currentNickname
 
-        // Проигрываем звук финала — он доиграет, потому что экран живёт
         if (isNewRecord) {
             soundManager.playWin()
         } else {
@@ -39,12 +39,17 @@ class ResultActivity : AppCompatActivity() {
         val tvNewRecord = findViewById<TextView>(R.id.tvNewRecord)
         val tvResultScore = findViewById<TextView>(R.id.tvResultScore)
         val tvPlayerLabel = findViewById<TextView>(R.id.tvPlayerLabel)
+        val tvEarnedCoins = findViewById<TextView>(R.id.tvEarnedCoins)
+        val tvTotalCoins = findViewById<TextView>(R.id.tvTotalCoins)
         val llTop = findViewById<LinearLayout>(R.id.llTop)
         val btnPlayAgain = findViewById<Button>(R.id.btnPlayAgain)
         val btnChangePlayer = findViewById<Button>(R.id.btnChangePlayer)
 
         tvResultScore.text = "Твой результат: $score"
         tvPlayerLabel.text = "Игрок: $nickname"
+        
+        tvEarnedCoins.text = "🪙 +$earnedCoins монет"
+        tvTotalCoins.text = "Всего: ${prefs.coins}"
 
         if (isNewRecord) {
             tvNewRecord.visibility = TextView.VISIBLE
