@@ -12,7 +12,6 @@ class Prefs(context: Context) {
         get() = prefs.getBoolean("sound_enabled", true)
         set(value) = prefs.edit().putBoolean("sound_enabled", value).apply()
 
-    // 0 = системная, 1 = светлая, 2 = тёмная
     var themeMode: Int
         get() = prefs.getInt("theme_mode", 2)
         set(value) = prefs.edit().putInt("theme_mode", value).apply()
@@ -21,6 +20,16 @@ class Prefs(context: Context) {
         get() = prefs.getString("current_nickname", "") ?: ""
         set(value) = prefs.edit().putString("current_nickname", value).apply()
 
+    // --- МОНЕТЫ ---
+    var coins: Int
+        get() = prefs.getInt("coins", 0)
+        set(value) = prefs.edit().putInt("coins", value).apply()
+
+    fun addCoins(amount: Int) {
+        coins = coins + amount
+    }
+
+    // --- ИСТОРИЯ НИКОВ ---
     fun getNicknameHistory(): List<String> {
         val json = prefs.getString("nickname_history", "[]") ?: "[]"
         val arr = JSONArray(json)
@@ -35,7 +44,6 @@ class Prefs(context: Context) {
         val history = getNicknameHistory().toMutableList()
         history.remove(nickname)
         history.add(0, nickname)
-        // Ограничим историю 10 никами
         while (history.size > 10) history.removeAt(history.size - 1)
 
         val arr = JSONArray()
@@ -43,6 +51,7 @@ class Prefs(context: Context) {
         prefs.edit().putString("nickname_history", arr.toString()).apply()
     }
 
+    // --- РЕКОРДЫ ---
     fun getAllRecords(): List<ScoreRecord> {
         val json = prefs.getString("records", "[]") ?: "[]"
         val arr = JSONArray(json)
@@ -63,7 +72,6 @@ class Prefs(context: Context) {
     fun addRecord(record: ScoreRecord) {
         val list = getAllRecords().toMutableList()
         list.add(record)
-        // Сортируем по очкам убыв., оставляем топ-100 в хранилище
         list.sortByDescending { it.score }
         val trimmed = list.take(100)
 
