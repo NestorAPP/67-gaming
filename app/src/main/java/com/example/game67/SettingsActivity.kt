@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.RadioGroup
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 
@@ -54,6 +55,13 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         btnBack.setOnClickListener { finish() }
+
+        // СЕКРЕТНАЯ КНОПКА ДЛЯ ТЕСТА ВРЕМЕНИ
+        val btnTestNextDay = findViewById<Button>(R.id.btnTestNextDay)
+        btnTestNextDay.setOnClickListener {
+            prefs.timeOffsetDays += 1
+            Toast.makeText(this, "Время сдвинуто на +1 день!", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun applyNightMode(mode: Int) {
