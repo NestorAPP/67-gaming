@@ -54,6 +54,27 @@ class Prefs(context: Context) {
         }
     }
 
+    // --- ЕЖЕДНЕВНЫЙ БОНУС ---
+    // Храним последнюю дату входа в днях (timestamp / 86400000)
+    var lastLoginDay: Long
+        get() = prefs.getLong("last_login_day", 0L)
+        set(value) = prefs.edit().putLong("last_login_day", value).apply()
+
+    var loginStreak: Int
+        get() = prefs.getInt("login_streak", 0)
+        set(value) = prefs.edit().putInt("login_streak", value).apply()
+
+    // Для тестов (сдвиг времени)
+    var timeOffsetDays: Int
+        get() = prefs.getInt("time_offset_days", 0)
+        set(value) = prefs.edit().putInt("time_offset_days", value).apply()
+
+    fun getCurrentDay(): Long {
+        // Текущее время в миллисекундах + сдвиг для тестов, переведенное в дни
+        val now = System.currentTimeMillis() + (timeOffsetDays * 86400000L)
+        return now / 86400000L
+    }
+
     // --- ИСТОРИЯ НИКОВ ---
     fun getNicknameHistory(): List<String> {
         val json = prefs.getString("nickname_history", "[]") ?: "[]"
