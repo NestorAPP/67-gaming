@@ -29,6 +29,31 @@ class Prefs(context: Context) {
         coins = coins + amount
     }
 
+    // --- АВАТАР ---
+    var currentAvatar: String
+        get() = prefs.getString("current_avatar", "😀") ?: "😀"
+        set(value) = prefs.edit().putString("current_avatar", value).apply()
+
+    fun getUnlockedPremiumAvatars(): List<String> {
+        val json = prefs.getString("unlocked_premium_avatars", "[]") ?: "[]"
+        val arr = JSONArray(json)
+        val list = mutableListOf<String>()
+        for (i in 0 until arr.length()) {
+            list.add(arr.getString(i))
+        }
+        return list
+    }
+
+    fun unlockPremiumAvatar(avatar: String) {
+        val list = getUnlockedPremiumAvatars().toMutableList()
+        if (!list.contains(avatar)) {
+            list.add(avatar)
+            val arr = JSONArray()
+            list.forEach { arr.put(it) }
+            prefs.edit().putString("unlocked_premium_avatars", arr.toString()).apply()
+        }
+    }
+
     // --- ИСТОРИЯ НИКОВ ---
     fun getNicknameHistory(): List<String> {
         val json = prefs.getString("nickname_history", "[]") ?: "[]"
