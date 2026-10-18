@@ -22,6 +22,7 @@ import kotlin.random.Random
 class MainActivity : AppCompatActivity() {
 
     private lateinit var rootLayout: RelativeLayout
+    private lateinit var tvCoins: TextView
     private lateinit var tvPlayerName: TextView
     private lateinit var tvTimer: TextView
     private lateinit var tvScore: TextView
@@ -59,6 +60,7 @@ class MainActivity : AppCompatActivity() {
         soundManager.setSoundEnabled(prefs.soundEnabled)
 
         rootLayout = findViewById(R.id.rootLayout)
+        tvCoins = findViewById(R.id.tvCoins)
         tvPlayerName = findViewById(R.id.tvPlayerName)
         tvTimer = findViewById(R.id.tvTimer)
         tvScore = findViewById(R.id.tvScore)
@@ -100,6 +102,7 @@ class MainActivity : AppCompatActivity() {
         val textSecondary = if (isDark) Color.parseColor("#AAAAAA") else Color.parseColor("#666666")
 
         rootLayout.setBackgroundColor(bg)
+        tvCoins.setTextColor(textPrimary)
         tvPlayerName.setTextColor(textSecondary)
         tvTimer.setTextColor(textPrimary)
         tvScore.setTextColor(textSecondary)
@@ -117,6 +120,7 @@ class MainActivity : AppCompatActivity() {
         tvPlayerName.text = "Игрок: $nickname"
         val best = prefs.getBestScoreForNickname(nickname)
         tvBest.text = "🏆 Рекорд: $best"
+        tvCoins.text = "🪙 ${prefs.coins}"
     }
 
     override fun onResume() {
@@ -337,12 +341,18 @@ class MainActivity : AppCompatActivity() {
         )
         prefs.addRecord(record)
 
-        // Определяем — побит ли рекорд. Передаём флаг в ResultActivity
+        // ЛОГИКА НАЧИСЛЕНИЯ МОНЕТ
+        var earnedCoins = score / 10
         val isNewRecord = score > bestBefore && score > 0
+        if (isNewRecord) {
+            earnedCoins += 10 // Бонус за рекорд
+        }
+        prefs.addCoins(earnedCoins)
 
         val intent = Intent(this, ResultActivity::class.java)
         intent.putExtra("score", score)
         intent.putExtra("isNewRecord", isNewRecord)
+        intent.putExtra("earnedCoins", earnedCoins)
         startActivity(intent)
         finish()
     }
